@@ -14,7 +14,6 @@ const fi = (function() {
     map: function(collection, callback) {
       if (!(collection instanceof Array))
         collection = Object.values(collection)
-      
       const newCollection = [];
       for (let i = 0; i < collection.length; i++) {
         const element = callback(collection[i])
@@ -24,16 +23,32 @@ const fi = (function() {
     },
 
     reduce: function(collection, callback, acc) {
-
+      if (!acc) {
+        acc = collection[0];
+        collection = collection.slice(1);
+      }
+      for (let element of collection) {
+        acc = callback(acc, element, collection)
+      }
+      return acc;
     },
 
     find: function(collection, predicate) {
-      const found = collection.find(element => element === predicate);
-      return found
+      if (!(collection instanceof Array))
+        collection = Object.values(collection)
+      for (let i = 0; i < collection.length; i++)
+        if (predicate(collection[i])) 
+          return collection[i]
     },
 
-    filter: function(collection) {
-
+    filter: function(collection, predicate) {
+      const newArr = []
+      if (!(collection instanceof Array))
+        collection = Object.values(collection)
+      for (let i = 0; i < collection.length; i++)
+        if (predicate(collection[i])) 
+          newArr.push(collection[i])
+      return newArr
     },
 
     size: function(collection) {
@@ -55,49 +70,71 @@ const fi = (function() {
     },
 
     sortBy: function(array, callback) {
-
+      const newArray = [...array];
+      return newArray.sort(function(a, b) {
+        return callback(a) - callback(b);
+      })
     },
 
     flatten: function(array, shallow = false) {
-      return (shallow) ? array.flat(shallow) : array.flat()
+      return (shallow) ? array.flat() : array.flat(Infinity);
     },
 
-    uniq: function(array, isSorted = false, callback = false) {
+    uniqSorted: function(collection, iteratee) {
+      const sorted = []
+      for (let i = 1; i < collection.length; i++) {
+        if (sorted[i - 1] !== collection[i])
+          sorted.push(collection[i])
+      }
+      return sorted
+    },
 
+    uniq: function(collection, sorted=false, iteratee=false) {
+      if (sorted) {
+        return this.uniqSorted(collection, iteratee)
+      } 
+      else if (!iteratee) {
+        return Array.from(new Set(collection))
+      } 
+      else {
+        const modifiedVals = new Set()
+        const uniqVals = new Set()
+        for (let val of collection) {
+          const moddedVal = iteratee(val)
+          if (!modifiedVals.has(moddedVal)) {
+            modifiedVals.add(moddedVal)
+            uniqVals.add(val)
+          }
+        }
+        return Array.from(uniqVals)
+      }
     },
 
     keys: function(object) {
       const keys = [];
-
       for (let element in object) {
         keys.push(element);
       }
-
       return keys;
     },
 
     values: function(object) {
       const values = [];
-
       for (let element in object) {
         values.push(object[element]);
       }
-
       return values;
     }, 
 
     functions: function(object) {
       const funcNames = [];
-
       for (let element in object) {
         if (typeof object[element] === "function") {
           funcNames.push(element);
         }
       }
-
       return funcNames.sort();
     }
-
   }
 })()
 
